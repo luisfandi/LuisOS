@@ -5,6 +5,44 @@
   
     <title>LUIS_OS // CORE v2.7</title>
 <style>
+    #boot-terminal {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: #000;
+    color: #00ffcc;
+    font-family: 'Courier New', monospace;
+    display: none; 
+    z-index: 10000; /* Aseguramos que esté por encima de TODO */
+    padding: 100px;
+    box-sizing: border-box;
+    text-shadow: 0 0 5px #00ffcc;
+    flex-direction: column;
+    justify-content: center; /* Centra las líneas verticalmente */
+}
+
+#terminal-content {
+    font-size: 1.2rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+/* Efecto de línea de escaneo moviéndose */
+#scan-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: rgba(0, 255, 204, 0.2);
+    box-shadow: 0 0 10px #00ffcc;
+    animation: scan 4s linear infinite;
+}
+
+@keyframes scan {
+    0% { top: 0; }
+    100% { top: 100%; }
+}
     :root { 
         --bg: #050505; --surface: #070707; --panel: #0a111a;
         --text: #ffffff; --text-dim: #555;
@@ -109,7 +147,10 @@
 </style>
 </head>
 <body class="theme-dark">
-
+<div id="boot-terminal">
+    <div id="terminal-content"></div>
+    <div id="scan-line"></div>
+</div>
     <div id="login-overlay">
         <h2 style="font-family: monospace; color: var(--primary); letter-spacing: 5px;">LUIS_OS // ACCESS</h2>
         <input type="password" id="pass-field" class="login-input" placeholder="PASSCODE" onkeyup="if(event.key === 'Enter') checkLogin()">
@@ -259,46 +300,82 @@
             document.getElementById('progress-text').style.color = color;
         }
 
-        // --- FUNCIÓN DE VOZ (JARVIS) ---
-function speak() {
-            // Creamos la instancia del audio con el protocolo que SI funcionó en tu consola
-            const jarvis = new Audio('static://welcome.mp3');
-            jarvis.volume = 1;
-
-            // Intentamos reproducir
-            jarvis.play()
-                .then(() => {
-                    console.log("Jarvis: Online y saludando.");
-                })
-                .catch(err => {
-                    console.warn("Autoplay bloqueado o archivo no encontrado:", err);
-                    
-                    // Si falla por falta de interacción, lo dejamos listo para el primer click del usuario
-                    const playOnce = () => {
-                        jarvis.play();
-                        document.removeEventListener('click', playOnce);
-                    };
-                    document.addEventListener('click', playOnce);
+    // --- SISTEMA DE AUDIO Y BOOTEO JARVIS ---
+        function speak() {
+            try {
+                // Usamos el protocolo static que configuramos en el index.ts
+                const jarvis = new Audio('static://welcome.mp3');
+                jarvis.volume = 1;
+                
+                jarvis.play().catch(err => {
+                    console.log("Autoplay bloqueado. Esperando interacción...");
+                    // Si falla, se activará al primer click del usuario
+                    document.addEventListener('click', () => { jarvis.play(); }, { once: true });
                 });
+            } catch (e) {
+                console.error("Error en el sistema de audio:", e);
+            }
         }
+
+        const bootLines = [
+            "> INITIALIZING BIOMETRIC SCAN...",
+            "> CONNECTION ESTABLISHED: ENCRYPTED_CHANNEL_07",
+            "> ANALYZING RETINA PATTERN...",
+            "> ACCESS GRANTED: LUIS JULIÁN FANDIÑO",
+            "> LOADING LUIS_OS CORE v2.7...",
+            "> MOUNTING SYSTEM MODULES...",
+            "> CHECKING PENDING OBJECTIVES...",
+            "> Jarvis.ai: ONLINE",
+            "> WELCOME HOME, SIR."
+        ];
+
+        function startIntro() {
+            const terminal = document.getElementById('boot-terminal');
+            const content = document.getElementById('terminal-content');
+            terminal.style.display = 'block';
+            
+            // Disparamos el audio
+            speak(); 
+
+            let i = 0;
+            function typeLine() {
+                if (i < bootLines.length) {
+                    content.innerHTML += bootLines[i] + "<br>";
+                    i++;
+                    // 1500ms para que las líneas vayan al compás de un audio de 17s
+                    setTimeout(typeLine, 1500); 
+                } else {
+                    setTimeout(() => {
+                        terminal.style.transition = "opacity 1.5s";
+                        terminal.style.opacity = "0";
+                        setTimeout(() => {
+                            terminal.style.display = 'none';
+                        }, 1500);
+                    }, 2000);
+                }
+            }
+            typeLine();
+        }
+
+        // --- SISTEMA DE LOGIN ---
         window.checkLogin = function() {
             const field = document.getElementById('pass-field');
             const val = btoa(field.value);
             
-            if (val === db.pass) { 
+            // 'db.pass' debe estar configurado en tu JSON o podes usar un string fijo para probar
+            if (val === db.pass || field.value === "tu_clave_aca") { 
                 document.getElementById('login-overlay').style.display = 'none'; 
                 render(); 
                 setBitacoraToday(); 
-                renderImportant();  
+                renderImportant();  
                 startPhraseTicker();
 
-                // --- EL DISPARADOR MÁGICO ---
-                // Le damos 500ms para que la interfaz cargue y el audio no se trabe
-              setTimeout(() => {
-                    speak(); 
-                }, 1000); // Un segundo de gracia para que cargue todo
+                // DISPARAMOS LA INTRO CINEMÁTICA
+                startIntro(); 
+
             } else { 
                 field.value = ""; 
+                alert("ACCESS DENIED");
             }
         }
         function startPhraseTicker() {

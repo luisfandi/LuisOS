@@ -263,76 +263,88 @@ button {
 </header>
 
    <aside>
-    <div class="nav-group">
-        <button class="nav-btn active" onclick="showTab('habits', this)">01. OBJETIVOS</button>
-        <button class="nav-btn" onclick="showTab('yesterday', this)">02. HISTORIAL</button>
-        <button class="nav-btn" onclick="showTab('word', this)">03. BITÁCORA</button>
-        <button class="nav-btn" onclick="showTab('important', this)">04. FECHAS IMPORTANTES</button>
-        <button class="nav-btn" onclick="showTab('informes', this)">05. INFORMES</button>
-    </div>
+  <div class="nav-group">
+    <button class="nav-btn active" onclick="showTab('home', this)">00. INICIO</button>
+    <button class="nav-btn" onclick="showTab('habits', this)">01. OBJETIVOS</button>
+    <button class="nav-btn" onclick="showTab('word', this)">02. BITÁCORA</button>
+    <button class="nav-btn" onclick="showTab('agenda', this)">03. AGENDA</button>
+    <button class="nav-btn" onclick="showTab('important', this)">04. FECHAS</button>
+</div>
     
     <button class="exit-btn" onclick="window.close()">[ SHUTDOWN ]</button>
 </aside>
 
         <main>
-            <div class="content-container">
-                <div id="tab-habits">
-                    <div class="title-wrapper">
-                        <h1 class="section-title">OBJETIVOS</h1>
-                        <div id="random-phrase" class="phrase-glitch">// INICIALIZANDO...</div>
-                    </div>
-                    <div id="current-date-habit" style="color:var(--primary); font-family:monospace; margin-bottom: 15px; font-size: 1rem; font-weight: bold;"></div>
-                    <div style="display: flex; height: 60px; margin-bottom: 30px; border: 1px solid var(--gray); position: relative; z-index: 5;">
-                        <input type="text" id="habit-input" placeholder="NUEVO OBJETIVO..." onkeyup="if(event.key === 'Enter') addHabit()" style="flex: 1; border: none; background: var(--surface); color: var(--text);">
-                        <button class="add-btn" onclick="addHabit()" style="position: relative; z-index: 6;">ADD</button>
-                    </div>
-                    <div id="list-today"></div>
-                    <button onclick="archiveDay()" style="width:100%; padding:15px; background:none; border:1px solid var(--primary); color:var(--primary); cursor:pointer; margin-top:30px; font-family:monospace; font-weight:bold;">
-                        [ FINALIZAR JORNADA ]
-                    </button>
-                </div>
+           <div class="content-container">
+    
+    <div id="tab-home">
+        <h1 class="section-title">SISTEMA CORE // <span style="color:var(--primary)">DASHBOARD</span></h1>
+        <h2 style="font-family:monospace; margin-bottom: 40px; color: var(--text-dim);">> ESTADO: <span style="color:#00FF41;">OPERATIVO</span></h2>
 
-                <div id="tab-yesterday" class="hidden">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 25px;">
-                        <h1 class="section-title" style="margin:0;">LOGS</h1>
-                        <button onclick="clearAllLogs()" style="background:none; border:1px solid #8B0000; color:#8B0000; padding:8px 15px; cursor:pointer; font-family:monospace; font-size: 0.8rem;">BORRAR_HISTORIAL</button>
-                    </div>
-                    <div id="list-yesterday"></div>
-                </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="item-row" style="flex-direction:column; align-items:flex-start; padding: 25px; cursor:pointer;" onclick="document.querySelectorAll('aside .nav-btn')[1].click()">
+                <div style="color:var(--primary); font-weight:bold; margin-bottom:10px;">[ OBJETIVOS DE HOY ]</div>
+                <div id="home-obj-status" style="font-family:monospace; font-size:1.2rem;">Calculando...</div>
+            </div>
+            <div class="item-row" style="flex-direction:column; align-items:flex-start; padding: 25px; cursor:pointer;" onclick="document.querySelectorAll('aside .nav-btn')[4].click()">
+                <div style="color:var(--primary); font-weight:bold; margin-bottom:10px;">[ PRÓXIMO EVENTO ]</div>
+                <div id="home-date-status" style="font-family:monospace; font-size:1.1rem;">Calculando...</div>
+            </div>
+        </div>
+    </div>
 
-                <div id="tab-word" class="hidden">
-                    <h1 class="section-title">BITÁCORA</h1>
-                    <div style="margin-bottom:25px; display:flex; gap:15px; align-items:center;">
-                        <input type="date" id="bitacora-date-picker" onchange="switchBitacoraCustom(this.value)" style="width: 250px;">
-                        <button onclick="setBitacoraToday()" style="background:var(--surface); color:var(--text); border:1px solid var(--gray); padding:10px 20px; cursor:pointer; font-family:monospace;">HOY</button>
-                    </div>
-                    <textarea id="word-editor" placeholder="Registrar eventos..."></textarea>
-                </div>
+    <div id="tab-habits" class="hidden">
+        <div class="title-wrapper">
+            <h1 class="section-title">OBJETIVOS</h1>
+            <div id="random-phrase" class="phrase-glitch" style="color:var(--primary); font-weight:bold;">// INICIALIZANDO...</div>
+        </div>
+        <div id="current-date-habit" style="color:var(--primary); font-family:monospace; margin-bottom: 15px; font-weight: bold;"></div>
+        
+        <div style="display: flex; height: 60px; margin-bottom: 30px; border: 1px solid var(--gray);">
+            <input type="text" id="habit-input" placeholder="NUEVO OBJETIVO..." onkeyup="if(event.key === 'Enter') addHabit()" style="flex: 1; border: none; background: transparent;">
+            <button class="add-btn" onclick="addHabit()">ADD</button>
+        </div>
+        
+        <div id="list-today"></div>
+        
+        <div style="display:flex; gap:10px; margin-top:30px;">
+            <button onclick="archiveDay()" style="flex:1; padding:15px; background:none; border:1px solid var(--primary); color:var(--primary); cursor:pointer; font-family:monospace; font-weight:bold;">[ FINALIZAR JORNADA ]</button>
+            <button onclick="document.getElementById('historial-oculto').classList.toggle('hidden')" style="padding:15px; background:var(--surface); border:1px solid var(--gray); color:var(--text); cursor:pointer; font-family:monospace;">[ VER HISTORIAL ]</button>
+        </div>
 
-                <div id="tab-important" class="hidden">
-                    <h1 class="section-title">FECHAS IMPORTANTES</h1>
-                    <div style="display: flex; height: 60px; margin-bottom: 30px; border: 1px solid var(--gray);">
-                        <input type="date" id="imp-date" style="flex: 0.3; border: none; border-right: 1px solid var(--gray);">
-                        <input type="text" id="imp-title" placeholder="DESCRIPCIÓN..." style="flex: 1; border: none;">
-                        <button class="add-btn" onclick="addImportantDate()">REGISTRAR</button>
-                    </div>
-                    <div id="list-important"></div>
-                </div>
-              <div id="tab-informes" class="hidden">
-                    <h2 class="section-title">INFORMES // <span class="cyan-text">DATABASE</span></h2>
-                    
-                    <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 30px; border: 1px solid var(--gray); padding: 20px;">
-                        <div style="display: flex; gap: 10px;">
-                            <input type="text" id="inf-nombre" placeholder="NOMBRE COMPLETO..." style="flex: 1;">
-                            <input type="text" id="inf-dni" placeholder="DNI / ID..." style="flex: 0.5;">
-                        </div>
-                        <input type="text" id="inf-cargo" placeholder="RELACIÓN / CARGO..." style="height: 50px;">
-                        <textarea id="inf-notas" placeholder="NOTAS / ANTECEDENTES..." style="height: 100px; background: var(--surface); color: var(--text); border: 1px solid var(--gray); padding: 10px; outline: none;"></textarea>
-                        <button class="add-btn" style="height: 50px; width: 100%;" onclick="saveInforme()">REGISTRAR EN DB</button>
-                    </div>
+        <div id="historial-oculto" class="hidden" style="margin-top: 30px; border-top: 1px dashed var(--gray); padding-top: 20px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                <h3 style="color:var(--text-dim); margin:0;">REGISTROS PASADOS</h3>
+                <button onclick="clearAllLogs()" style="background:none; border:none; color:#8B0000; cursor:pointer; font-family:monospace;">BORRAR TODO</button>
+            </div>
+            <div id="list-yesterday"></div>
+        </div>
+    </div>
 
-                    <div id="informes-list"></div>
-                </div>
+    <div id="tab-word" class="hidden">
+        <h1 class="section-title">BITÁCORA</h1>
+        <div style="margin-bottom:25px; display:flex; gap:15px; align-items:center;">
+            <input type="date" id="bitacora-date-picker" onchange="switchBitacoraCustom(this.value)" style="width: 250px;">
+            <button onclick="setBitacoraToday()" style="background:var(--surface); color:var(--text); border:1px solid var(--gray); padding:10px 20px; cursor:pointer; font-family:monospace;">HOY</button>
+        </div>
+        <textarea id="word-editor" placeholder="Registrar eventos..."></textarea>
+    </div>
+
+    <div id="tab-agenda" class="hidden">
+        <h1 class="section-title">AGENDA // <span style="color:var(--primary)">SCRATCHPAD</span></h1>
+        <textarea id="agenda-editor" placeholder="Notas libres, links, horarios..." style="width: 100%; height: 50vh; resize: none; font-size: 1.1rem; line-height: 1.6;"></textarea>
+    </div>
+
+    <div id="tab-important" class="hidden">
+        <h1 class="section-title">FECHAS IMPORTANTES</h1>
+        <div style="display: flex; height: 60px; margin-bottom: 30px; border: 1px solid var(--gray);">
+            <input type="date" id="imp-date" style="flex: 0.3; border: none; border-right: 1px solid var(--gray);">
+            <input type="text" id="imp-title" placeholder="DESCRIPCIÓN..." style="flex: 1; border: none;">
+            <button class="add-btn" onclick="addImportantDate()">REGISTRAR</button>
+        </div>
+        <div id="list-important"></div>
+    </div>
+
 </div>
             </div>
         </main>
@@ -345,6 +357,7 @@ button {
         const dbPath = path.join(process.env.USERPROFILE || process.env.HOME, 'LUIS_OS_DATABASE.json');
 
         let db, currentEditingDate = "";
+        
         const frasesNuevas = [
             "¿YA HUBO QUILOMBO EN EL GRUPO DE PDE?",
             "¿SE VOLVIERON A PELEAR CASCARDO Y VOLPA?",
@@ -380,7 +393,7 @@ button {
         }
 
         db = loadFromDisk();
-
+if (!db.agendaText) db.agendaText = "";
         window.toggleThemeMenu = function() {
             const menu = document.getElementById('theme-menu');
             menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'flex' : 'none';
@@ -553,7 +566,7 @@ button {
     updateProgressUI(perc);
     document.getElementById('progress-text').innerText = `${perc}% COMPLETE (${comp}/${total})`;
     
-    todayHabits.forEach(h => {
+   todayHabits.forEach(h => {
         list.innerHTML += `
             <div class="item-row">
                 <span class="item-text" style="opacity: ${h.done ? '0.3' : '1'}">${h.text}</span>
@@ -563,17 +576,22 @@ button {
                 </div>
             </div>`;
     });
-
-    // --- AGREGAMOS LOS INFORMES AL RENDER GENERAL ---
-    renderInformes(); 
+    
+    renderHome(); 
 }
-
         const editor = document.getElementById('word-editor');
         editor.addEventListener('input', () => {
             if(!currentEditingDate) return;
             db.bitacora[currentEditingDate] = btoa(unescape(encodeURIComponent(editor.value)));
             saveToDisk();
         });
+        // Guardado automático de la Agenda
+const agendaEditor = document.getElementById('agenda-editor');
+agendaEditor.value = db.agendaText || "";
+agendaEditor.addEventListener('input', () => {
+    db.agendaText = agendaEditor.value;
+    saveToDisk();
+});
 
         window.setBitacoraToday = function() {
             const now = new Date();
@@ -639,10 +657,34 @@ button {
             switchBitacoraCustom(date);
             showTab('word', document.querySelectorAll('.nav-btn')[2]);
         }
+        window.renderHome = function() {
+    // Calculo Objetivos
+    const todayStr = new Date().toLocaleDateString();
+    const todayHabits = (db.habits || []).filter(h => h.date === todayStr);
+    const comp = todayHabits.filter(h => h.done).length;
+    const tot = todayHabits.length;
+    document.getElementById('home-obj-status').innerText = tot === 0 ? "SIN OBJETIVOS REGISTRADOS" : `PROGRESO: ${comp} / ${tot}`;
 
-      window.showTab = function(tab, btn) {
-    // Agregamos 'informes' a la lista de limpieza
-    ['habits', 'yesterday', 'word', 'important', 'informes'].forEach(t => {
+    // Calculo Próximo Evento
+    const dateStatus = document.getElementById('home-date-status');
+    if (!db.importantDates || db.importantDates.length === 0) {
+        dateStatus.innerText = "SIN EVENTOS PROGRAMADOS";
+    } else {
+        const sorted = [...db.importantDates].sort((a,b) => new Date(a.date) - new Date(b.date));
+        const todayReverse = todayStr.split('/').reverse().join('-');
+        const next = sorted.find(d => new Date(d.date) >= new Date(todayReverse));
+        if (next) {
+            const [y, m, d] = next.date.split('-');
+            dateStatus.innerHTML = `<span style="color:#fff">${d}/${m}/${y}</span> - ${next.title}`;
+        } else {
+            dateStatus.innerText = "NO HAY EVENTOS FUTUROS";
+        }
+    }
+}
+
+   window.showTab = function(tab, btn) {
+    // Ocultamos todas las pestañas
+    ['home', 'habits', 'word', 'agenda', 'important'].forEach(t => {
         const el = document.getElementById('tab-' + t);
         if(el) el.classList.add('hidden');
     });
@@ -650,12 +692,14 @@ button {
     // Mostramos la elegida
     document.getElementById('tab-' + tab).classList.remove('hidden');
     
+    // Actualizamos los botones del menú
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    if(btn) btn.classList.add('active');
     
-    if (tab === 'yesterday') renderHistory();
+    // Renderizados específicos
+    if (tab === 'home') renderHome();      // <--- Agregamos esta
+    if (tab === 'habits') renderHistory(); 
     if (tab === 'important') renderImportant();
-    if (tab === 'informes') renderInformes(); // <--- IMPORTANTE: Renderizar al entrar
 }
 
         let lastCheckDate = new Date().toLocaleDateString();
@@ -671,64 +715,10 @@ button {
         }, 1000);
 
         startPhraseTicker();
-        window.saveInforme = function() {
-    const nombre = document.getElementById('inf-nombre').value;
-    const dni = document.getElementById('inf-dni').value;
-    const cargo = document.getElementById('inf-cargo').value;
-    const notas = document.getElementById('inf-notas').value;
+     
 
-    if (!nombre) return alert("Mínimo poné el nombre, fiera");
 
-    if (!db.informes) db.informes = [];
-    
-    db.informes.push({
-        id: Date.now(),
-        nombre,
-        dni,
-        cargo,
-        notas,
-        fecha: new Date().toLocaleDateString()
-    });
 
-    saveToDisk(); // Corregido el nombre aquí
-    renderInformes();
-    
-    // Limpiar campos
-    ['inf-nombre', 'inf-dni', 'inf-cargo', 'inf-notas'].forEach(id => document.getElementById(id).value = '');
-}
-
-window.renderInformes = function() {
-    const container = document.getElementById('informes-list');
-    if(!container) return;
-    container.innerHTML = '';
-
-    if (!db.informes) return;
-
-    db.informes.forEach(inf => {
-        container.innerHTML += `
-            <div class="data-item">
-                <div class="data-header">
-                    <span style="color:var(--primary)">[${inf.fecha}]</span> 
-                    <strong style="letter-spacing:1px">${inf.nombre.toUpperCase()}</strong>
-                </div>
-                <div style="font-size:0.85rem; margin-top:5px; color:var(--text-dim)">
-                    CARGO: ${inf.cargo} | ID: ${inf.dni}
-                </div>
-                <div style="margin-top:10px; font-family:monospace; color:#aaa; font-size:0.9rem; background:rgba(0,0,0,0.3); padding:10px;">
-                    ${inf.notas}
-                </div>
-                <button class="delete-btn" onclick="deleteInforme(${inf.id})">ELIMINAR_REGISTRO</button>
-            </div>
-        `;
-    });
-}
-
-window.deleteInforme = function(id) {
-    if(!confirm("¿CONFIRMA ELIMINACIÓN DE EXPEDIENTE?")) return;
-    db.informes = db.informes.filter(inf => inf.id !== id);
-    saveToDisk();
-    renderInformes();
-}
     </script>
 </body>
 </html>

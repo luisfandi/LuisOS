@@ -104,7 +104,25 @@ button {
 
     aside { grid-row: 2 / 3; background: var(--bg); border-right: 1px solid var(--primary); padding: 25px; display: flex; flex-direction: column; }
     .nav-group { display: flex; flex-direction: column; gap: 5px; flex-grow: 1; }
-    .nav-btn { background: none; border: none; color: var(--text-dim); text-align: left; font-family: monospace; cursor: pointer; font-size: 0.85rem; text-transform: uppercase; outline: none; padding: 10px 0; border-left: 3px solid transparent; }
+   .nav-btn { 
+            background: none; 
+            border: none; 
+            color: #888; /* <-- Acá subimos el brillo del gris oscuro a uno medio */
+            text-align: left; 
+            font-family: monospace; 
+            cursor: pointer; 
+            font-size: 0.9rem; /* <-- Le subimos un pelín el tamaño */
+            font-weight: bold; /* <-- NEGRILLA PARA TODOS */
+            letter-spacing: 1px; /* <-- Espacio entre letras para que sea más legible */
+            text-transform: uppercase; 
+            padding: 12px 0; /* <-- Un poco más de espacio arriba y abajo */
+            border-left: 3px solid transparent; 
+            transition: all 0.2s ease; /* Transición suave al pasar el mouse */
+        }
+        .nav-btn:hover:not(.active) {
+            color: #ccc; /* Se pone casi blanco al pasar el mouse */
+            border-left: 3px solid rgba(255, 255, 255, 0.2);
+        }
     .nav-btn.active { color: var(--primary); font-weight: bold; border-left: 3px solid var(--primary); padding-left: 15px; }
 
   #theme-menu { 
@@ -169,6 +187,45 @@ button {
     
     .progress-container { position: absolute; bottom: -1px; left: 0; width: 100%; height: 3px; background: var(--gray); }
     .progress-bar { height: 100%; width: var(--progress-w); background: var(--dyn-color); transition: 0.8s ease; }
+    /* ESTILOS PARA LA SECCIÓN INFORMES */
+#informes-list {
+    margin-top: 20px;
+    max-height: 400px;
+    overflow-y: auto; /* Para que si tenés muchos, puedas scrollear */
+}
+
+.data-item {
+    background: rgba(10, 10, 10, 0.8);
+    border: 1px solid var(--gray);
+    padding: 15px;
+    margin-bottom: 15px;
+    position: relative;
+}
+
+.data-item:hover {
+    border-color: var(--primary);
+}
+
+.data-header {
+    border-bottom: 1px dashed var(--gray);
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+.delete-btn {
+    background: transparent;
+    color: #ff4444;
+    border: 1px solid #ff4444;
+    cursor: pointer;
+    font-size: 0.7rem;
+    padding: 2px 5px;
+    margin-top: 10px;
+}
+
+.delete-btn:hover {
+    background: #ff4444;
+    color: white;
+}
 </style>
 </head>
 <body class="theme-dark">
@@ -211,6 +268,7 @@ button {
         <button class="nav-btn" onclick="showTab('yesterday', this)">02. HISTORIAL</button>
         <button class="nav-btn" onclick="showTab('word', this)">03. BITÁCORA</button>
         <button class="nav-btn" onclick="showTab('important', this)">04. FECHAS IMPORTANTES</button>
+        <button class="nav-btn" onclick="showTab('informes', this)">05. INFORMES</button>
     </div>
     
     <button class="exit-btn" onclick="window.close()">[ SHUTDOWN ]</button>
@@ -260,6 +318,22 @@ button {
                     </div>
                     <div id="list-important"></div>
                 </div>
+              <div id="tab-informes" class="hidden">
+                    <h2 class="section-title">INFORMES // <span class="cyan-text">DATABASE</span></h2>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 30px; border: 1px solid var(--gray); padding: 20px;">
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="inf-nombre" placeholder="NOMBRE COMPLETO..." style="flex: 1;">
+                            <input type="text" id="inf-dni" placeholder="DNI / ID..." style="flex: 0.5;">
+                        </div>
+                        <input type="text" id="inf-cargo" placeholder="RELACIÓN / CARGO..." style="height: 50px;">
+                        <textarea id="inf-notas" placeholder="NOTAS / ANTECEDENTES..." style="height: 100px; background: var(--surface); color: var(--text); border: 1px solid var(--gray); padding: 10px; outline: none;"></textarea>
+                        <button class="add-btn" style="height: 50px; width: 100%;" onclick="saveInforme()">REGISTRAR EN DB</button>
+                    </div>
+
+                    <div id="informes-list"></div>
+                </div>
+</div>
             </div>
         </main>
     </div>
@@ -280,8 +354,16 @@ button {
             "AMO A MI MAMÁ",
             "PODRÍAS COCINAR CADA TANTO",
             "LEETE PADRE RICO PADRE POBRE",
-            "¿YA FUISTE AL CASINO?",
-            "EL 1 DE MAYO SALE TEMPORADA DEL ENCARGADO"
+            "AMO A LAS MUJERES",
+            "¿QUE COVER SE VIENE PARA EL VIERNES?",
+            "UPTOWN?",
+            "VIERNES ASADO PILETA IMA",
+            "BOCA BOOCAAA",
+            "buen intento ramardo",
+            "¿AURA?",
+            "cojer en big 2026",
+            "tarán",
+
         ];
 
         function loadFromDisk() {
@@ -454,28 +536,37 @@ button {
             saveToDisk(); renderHistory();
         }
 
-        window.render = function() {
-            const todayStr = new Date().toLocaleDateString();
-            document.getElementById('current-date-habit').innerText = todayStr.toUpperCase();
-            const list = document.getElementById('list-today');
-            list.innerHTML = '';
-            const todayHabits = db.habits.filter(h => h.date === todayStr);
-            const comp = todayHabits.filter(h => h.done).length;
-            const total = todayHabits.length;
-            const perc = total ? Math.round((comp/total)*100) : 0;
-            updateProgressUI(perc);
-            document.getElementById('progress-text').innerText = `${perc}% COMPLETE (${comp}/${total})`;
-            todayHabits.forEach(h => {
-                list.innerHTML += `
-                    <div class="item-row">
-                        <span class="item-text" style="opacity: ${h.done ? '0.3' : '1'}">${h.text}</span>
-                        <div style="display:flex; gap:15px; align-items:center;">
-                            <input type="checkbox" ${h.done?'checked':''} onchange="toggleHabit(${h.id})">
-                            <span onclick="deleteHabit(${h.id})" style="cursor:pointer; opacity:0.1; font-size:1.1rem;">🗑️</span>
-                        </div>
-                    </div>`;
-            });
-        }
+      window.render = function() {
+    const todayStr = new Date().toLocaleDateString();
+    const dateEl = document.getElementById('current-date-habit');
+    if(dateEl) dateEl.innerText = todayStr.toUpperCase();
+    
+    const list = document.getElementById('list-today');
+    if(!list) return;
+    
+    list.innerHTML = '';
+    const todayHabits = db.habits.filter(h => h.date === todayStr);
+    const comp = todayHabits.filter(h => h.done).length;
+    const total = todayHabits.length;
+    const perc = total ? Math.round((comp/total)*100) : 0;
+    
+    updateProgressUI(perc);
+    document.getElementById('progress-text').innerText = `${perc}% COMPLETE (${comp}/${total})`;
+    
+    todayHabits.forEach(h => {
+        list.innerHTML += `
+            <div class="item-row">
+                <span class="item-text" style="opacity: ${h.done ? '0.3' : '1'}">${h.text}</span>
+                <div style="display:flex; gap:15px; align-items:center;">
+                    <input type="checkbox" ${h.done?'checked':''} onchange="toggleHabit(${h.id})">
+                    <span onclick="deleteHabit(${h.id})" style="cursor:pointer; opacity:0.1; font-size:1.1rem;">🗑️</span>
+                </div>
+            </div>`;
+    });
+
+    // --- AGREGAMOS LOS INFORMES AL RENDER GENERAL ---
+    renderInformes(); 
+}
 
         const editor = document.getElementById('word-editor');
         editor.addEventListener('input', () => {
@@ -542,20 +633,30 @@ button {
             });
         }
 
+
         window.jumpToDate = function(date) {
             document.getElementById('bitacora-date-picker').value = date;
             switchBitacoraCustom(date);
             showTab('word', document.querySelectorAll('.nav-btn')[2]);
         }
 
-        window.showTab = function(tab, btn) {
-            ['habits', 'yesterday', 'word', 'important'].forEach(t => document.getElementById('tab-'+t).classList.add('hidden'));
-            document.getElementById('tab-'+tab).classList.remove('hidden');
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            if (tab === 'yesterday') renderHistory();
-            if (tab === 'important') renderImportant();
-        }
+      window.showTab = function(tab, btn) {
+    // Agregamos 'informes' a la lista de limpieza
+    ['habits', 'yesterday', 'word', 'important', 'informes'].forEach(t => {
+        const el = document.getElementById('tab-' + t);
+        if(el) el.classList.add('hidden');
+    });
+    
+    // Mostramos la elegida
+    document.getElementById('tab-' + tab).classList.remove('hidden');
+    
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    
+    if (tab === 'yesterday') renderHistory();
+    if (tab === 'important') renderImportant();
+    if (tab === 'informes') renderInformes(); // <--- IMPORTANTE: Renderizar al entrar
+}
 
         let lastCheckDate = new Date().toLocaleDateString();
         setInterval(() => {
@@ -570,6 +671,64 @@ button {
         }, 1000);
 
         startPhraseTicker();
+        window.saveInforme = function() {
+    const nombre = document.getElementById('inf-nombre').value;
+    const dni = document.getElementById('inf-dni').value;
+    const cargo = document.getElementById('inf-cargo').value;
+    const notas = document.getElementById('inf-notas').value;
+
+    if (!nombre) return alert("Mínimo poné el nombre, fiera");
+
+    if (!db.informes) db.informes = [];
+    
+    db.informes.push({
+        id: Date.now(),
+        nombre,
+        dni,
+        cargo,
+        notas,
+        fecha: new Date().toLocaleDateString()
+    });
+
+    saveToDisk(); // Corregido el nombre aquí
+    renderInformes();
+    
+    // Limpiar campos
+    ['inf-nombre', 'inf-dni', 'inf-cargo', 'inf-notas'].forEach(id => document.getElementById(id).value = '');
+}
+
+window.renderInformes = function() {
+    const container = document.getElementById('informes-list');
+    if(!container) return;
+    container.innerHTML = '';
+
+    if (!db.informes) return;
+
+    db.informes.forEach(inf => {
+        container.innerHTML += `
+            <div class="data-item">
+                <div class="data-header">
+                    <span style="color:var(--primary)">[${inf.fecha}]</span> 
+                    <strong style="letter-spacing:1px">${inf.nombre.toUpperCase()}</strong>
+                </div>
+                <div style="font-size:0.85rem; margin-top:5px; color:var(--text-dim)">
+                    CARGO: ${inf.cargo} | ID: ${inf.dni}
+                </div>
+                <div style="margin-top:10px; font-family:monospace; color:#aaa; font-size:0.9rem; background:rgba(0,0,0,0.3); padding:10px;">
+                    ${inf.notas}
+                </div>
+                <button class="delete-btn" onclick="deleteInforme(${inf.id})">ELIMINAR_REGISTRO</button>
+            </div>
+        `;
+    });
+}
+
+window.deleteInforme = function(id) {
+    if(!confirm("¿CONFIRMA ELIMINACIÓN DE EXPEDIENTE?")) return;
+    db.informes = db.informes.filter(inf => inf.id !== id);
+    saveToDisk();
+    renderInformes();
+}
     </script>
 </body>
 </html>

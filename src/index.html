@@ -154,7 +154,7 @@ button {
     .exit-btn { background: none; border: 1px solid var(--gray); color: var(--text-dim); padding: 8px; font-family: monospace; cursor: pointer; width: 100%; margin-top: auto; font-size: 0.75rem; }
 
     main { grid-row: 2 / 3; padding: 40px; overflow-y: auto; display: flex; justify-content: center; background: radial-gradient(circle at center, var(--panel) 0%, var(--bg) 100%); }
-    .content-container { width: 100%; max-width: 1100px; display: flex; flex-direction: column; }
+  .content-container { width: 100%; max-width: 1600px; /* <-- Aumentamos el límite de ancho */ display: flex; flex-direction: column; }
     
     .section-title { font-size: 3.5rem; font-style: italic; font-weight: 900; line-height: 1; text-transform: uppercase; margin-bottom: 20px; letter-spacing: -1px; }
     .title-wrapper { display: flex; align-items: baseline; gap: 25px; margin-bottom: 30px; }
@@ -275,13 +275,13 @@ button {
 </aside>
 
         <main>
-           <div class="content-container">
+        <div class="content-container">
     
     <div id="tab-home">
         <h1 class="section-title">SISTEMA CORE // <span style="color:var(--primary)">DASHBOARD</span></h1>
         <h2 style="font-family:monospace; margin-bottom: 40px; color: var(--text-dim);">> ESTADO: <span style="color:#00FF41;">OPERATIVO</span></h2>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
             <div class="item-row" style="flex-direction:column; align-items:flex-start; padding: 25px; cursor:pointer;" onclick="document.querySelectorAll('aside .nav-btn')[1].click()">
                 <div style="color:var(--primary); font-weight:bold; margin-bottom:10px;">[ OBJETIVOS DE HOY ]</div>
                 <div id="home-obj-status" style="font-family:monospace; font-size:1.2rem;">Calculando...</div>
@@ -331,8 +331,13 @@ button {
     </div>
 
     <div id="tab-agenda" class="hidden">
-        <h1 class="section-title">AGENDA // <span style="color:var(--primary)">SCRATCHPAD</span></h1>
-        <textarea id="agenda-editor" placeholder="Notas libres, links, horarios..." style="width: 100%; height: 50vh; resize: none; font-size: 1.1rem; line-height: 1.6;"></textarea>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+            <h1 class="section-title" style="margin:0;">AGENDA // <span style="color:var(--primary)">SEMANAL</span></h1>
+            <button onclick="clearAgenda()" style="background:none; border:1px solid #8B0000; color:#8B0000; padding:8px 15px; cursor:pointer; font-family:monospace; font-size: 0.8rem;">LIMPIAR SEMANA</button>
+        </div>
+        
+        <div id="agenda-grid" style="display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px;">
+        </div>
     </div>
 
     <div id="tab-important" class="hidden">
@@ -350,7 +355,7 @@ button {
         </main>
     </div>
 
-  <script>
+ <script>
         const fs = require('fs');
         const path = require('path');
         
@@ -366,8 +371,7 @@ button {
             "ANDÁ AL GYM",
             "AMO A MI MAMÁ",
             "PODRÍAS COCINAR CADA TANTO",
-            "LEETE PADRE RICO PADRE POBRE",
-            "AMO A LAS MUJERES",
+            "LEETE PADRE RICO PADRE POBRE",      
             "¿QUE COVER SE VIENE PARA EL VIERNES?",
             "UPTOWN?",
             "VIERNES ASADO PILETA IMA",
@@ -376,12 +380,11 @@ button {
             "¿AURA?",
             "cojer en big 2026",
             "tarán",
-
         ];
 
         function loadFromDisk() {
             if (!fs.existsSync(dbPath)) {
-                const initial = { habits: [], bitacora: {}, pass: null, history: [], importantDates: [], theme: 'dark' };
+               const initial = { habits: [], bitacora: {}, pass: null, history: [], importantDates: [], agendaSemanal: {}, theme: 'dark' };
                 fs.writeFileSync(dbPath, JSON.stringify(initial, null, 2));
                 return initial;
             }
@@ -393,7 +396,56 @@ button {
         }
 
         db = loadFromDisk();
-if (!db.agendaText) db.agendaText = "";
+
+        // ==========================================
+        // LÓGICA DE LA NUEVA AGENDA SEMANAL
+        // ==========================================
+        if (!db.agendaSemanal) db.agendaSemanal = {};
+
+        const diasSemana = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
+        const horasDia = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00', '23:00'];
+window.renderAgenda = function() {
+            const grid = document.getElementById('agenda-grid');
+            if(!grid) return;
+            grid.innerHTML = '';
+
+            diasSemana.forEach(dia => {
+                // ACÁ ESTÁ LA MAGIA: Cambiamos el fondo fijo por var(--surface) y la letra a blanco (#fff)
+                let htmlCol = `
+                <div style="flex: 1; background: var(--surface); border: 1px solid var(--gray); display: flex; flex-direction: column;">
+                    <div style="background: var(--primary); color: #fff; text-align: center; padding: 10px; font-weight: bold; font-family: monospace; letter-spacing: 2px;">
+                        ${dia}
+                    </div>
+                    <div style="flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; height: 70vh;">`;
+
+                horasDia.forEach(hora => {
+                    const key = `${dia}_${hora}`;
+                    const valorGuardado = db.agendaSemanal[key] || '';
+                    htmlCol += `
+                        <div style="display: flex; align-items: center; gap: 10px; border-bottom: 1px dashed var(--gray); padding-bottom: 5px;">
+                            <span style="font-size: 0.75rem; color: var(--primary); font-family: monospace;">${hora}</span>
+                            <input type="text" value="${valorGuardado}" onchange="saveAgendaSlot('${key}', this.value)" placeholder="..." style="width: 100%; border: none !important; background: transparent !important; padding: 5px !important; font-size: 0.85rem !important; color: var(--text) !important; outline: none;">
+                        </div>
+                    `;
+                });
+
+                htmlCol += `</div></div>`;
+                grid.innerHTML += htmlCol;
+            });
+        }
+
+        window.saveAgendaSlot = function(key, val) {
+            db.agendaSemanal[key] = val;
+            saveToDisk();
+        }
+
+        window.clearAgenda = function() {
+            if(!confirm("¿ALERTA: Borrar toda la planificación de esta semana?")) return;
+            db.agendaSemanal = {};
+            saveToDisk();
+            renderAgenda();
+        }
+        // ==========================================
         window.toggleThemeMenu = function() {
             const menu = document.getElementById('theme-menu');
             menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'flex' : 'none';
@@ -420,16 +472,12 @@ if (!db.agendaText) db.agendaText = "";
             document.getElementById('progress-text').style.color = color;
         }
 
-    // --- SISTEMA DE AUDIO Y BOOTEO JARVIS ---
         function speak() {
             try {
-                // Usamos el protocolo static que configuramos en el index.ts
                 const jarvis = new Audio('static://welcome.mp3');
                 jarvis.volume = 1;
-                
                 jarvis.play().catch(err => {
                     console.log("Autoplay bloqueado. Esperando interacción...");
-                    // Si falla, se activará al primer click del usuario
                     document.addEventListener('click', () => { jarvis.play(); }, { once: true });
                 });
             } catch (e) {
@@ -453,8 +501,6 @@ if (!db.agendaText) db.agendaText = "";
             const terminal = document.getElementById('boot-terminal');
             const content = document.getElementById('terminal-content');
             terminal.style.display = 'block';
-            
-            // Disparamos el audio
             speak(); 
 
             let i = 0;
@@ -462,7 +508,6 @@ if (!db.agendaText) db.agendaText = "";
                 if (i < bootLines.length) {
                     content.innerHTML += bootLines[i] + "<br>";
                     i++;
-                    // 1500ms para que las líneas vayan al compás de un audio de 17s
                     setTimeout(typeLine, 1500); 
                 } else {
                     setTimeout(() => {
@@ -477,27 +522,23 @@ if (!db.agendaText) db.agendaText = "";
             typeLine();
         }
 
-        // --- SISTEMA DE LOGIN ---
         window.checkLogin = function() {
             const field = document.getElementById('pass-field');
             const val = btoa(field.value);
             
-            // 'db.pass' debe estar configurado en tu JSON o podes usar un string fijo para probar
             if (val === db.pass || field.value === "tu_clave_aca") { 
                 document.getElementById('login-overlay').style.display = 'none'; 
                 render(); 
                 setBitacoraToday(); 
-                renderImportant();  
+                renderImportant();  
                 startPhraseTicker();
-
-                // DISPARAMOS LA INTRO CINEMÁTICA
                 startIntro(); 
-
             } else { 
                 field.value = ""; 
                 alert("ACCESS DENIED");
             }
         }
+
         function startPhraseTicker() {
             const el = document.getElementById('random-phrase');
             const change = () => {
@@ -549,49 +590,53 @@ if (!db.agendaText) db.agendaText = "";
             saveToDisk(); renderHistory();
         }
 
-      window.render = function() {
-    const todayStr = new Date().toLocaleDateString();
-    const dateEl = document.getElementById('current-date-habit');
-    if(dateEl) dateEl.innerText = todayStr.toUpperCase();
-    
-    const list = document.getElementById('list-today');
-    if(!list) return;
-    
-    list.innerHTML = '';
-    const todayHabits = db.habits.filter(h => h.date === todayStr);
-    const comp = todayHabits.filter(h => h.done).length;
-    const total = todayHabits.length;
-    const perc = total ? Math.round((comp/total)*100) : 0;
-    
-    updateProgressUI(perc);
-    document.getElementById('progress-text').innerText = `${perc}% COMPLETE (${comp}/${total})`;
-    
-   todayHabits.forEach(h => {
-        list.innerHTML += `
-            <div class="item-row">
-                <span class="item-text" style="opacity: ${h.done ? '0.3' : '1'}">${h.text}</span>
-                <div style="display:flex; gap:15px; align-items:center;">
-                    <input type="checkbox" ${h.done?'checked':''} onchange="toggleHabit(${h.id})">
-                    <span onclick="deleteHabit(${h.id})" style="cursor:pointer; opacity:0.1; font-size:1.1rem;">🗑️</span>
-                </div>
-            </div>`;
-    });
-    
-    renderHome(); 
-}
+        window.render = function() {
+            const todayStr = new Date().toLocaleDateString();
+            // --- NUEVO: AUTO-MIGRACIÓN DE OBJETIVOS (RETENCIÓN) ---
+            // Si tenés objetivos en la base de datos, pero ninguno tiene la fecha de HOY...
+            if (db.habits.length > 0 && !db.habits.some(h => h.date === todayStr)) {
+                db.habits.forEach(h => {
+                    h.date = todayStr; // Les actualizamos la fecha al día de hoy
+                    h.done = false;    // Destildamos todo para arrancar limpios
+                });
+                saveToDisk(); // Guardamos los cambios
+            }
+            // --------------------------------------------------------
+            const dateEl = document.getElementById('current-date-habit');
+            if(dateEl) dateEl.innerText = todayStr.toUpperCase();
+            
+            const list = document.getElementById('list-today');
+            if(!list) return;
+            
+            list.innerHTML = '';
+            const todayHabits = db.habits.filter(h => h.date === todayStr);
+            const comp = todayHabits.filter(h => h.done).length;
+            const total = todayHabits.length;
+            const perc = total ? Math.round((comp/total)*100) : 0;
+            
+            updateProgressUI(perc);
+            document.getElementById('progress-text').innerText = `${perc}% COMPLETE (${comp}/${total})`;
+            
+            todayHabits.forEach(h => {
+                list.innerHTML += `
+                    <div class="item-row">
+                        <span class="item-text" style="opacity: ${h.done ? '0.3' : '1'}">${h.text}</span>
+                        <div style="display:flex; gap:15px; align-items:center;">
+                            <input type="checkbox" ${h.done?'checked':''} onchange="toggleHabit(${h.id})">
+                            <span onclick="deleteHabit(${h.id})" style="cursor:pointer; opacity:0.1; font-size:1.1rem;">🗑️</span>
+                        </div>
+                    </div>`;
+            });
+            
+            renderHome(); 
+        }
+
         const editor = document.getElementById('word-editor');
         editor.addEventListener('input', () => {
             if(!currentEditingDate) return;
             db.bitacora[currentEditingDate] = btoa(unescape(encodeURIComponent(editor.value)));
             saveToDisk();
         });
-        // Guardado automático de la Agenda
-const agendaEditor = document.getElementById('agenda-editor');
-agendaEditor.value = db.agendaText || "";
-agendaEditor.addEventListener('input', () => {
-    db.agendaText = agendaEditor.value;
-    saveToDisk();
-});
 
         window.setBitacoraToday = function() {
             const now = new Date();
@@ -651,56 +696,53 @@ agendaEditor.addEventListener('input', () => {
             });
         }
 
-
         window.jumpToDate = function(date) {
             document.getElementById('bitacora-date-picker').value = date;
             switchBitacoraCustom(date);
             showTab('word', document.querySelectorAll('.nav-btn')[2]);
         }
+
         window.renderHome = function() {
-    // Calculo Objetivos
-    const todayStr = new Date().toLocaleDateString();
-    const todayHabits = (db.habits || []).filter(h => h.date === todayStr);
-    const comp = todayHabits.filter(h => h.done).length;
-    const tot = todayHabits.length;
-    document.getElementById('home-obj-status').innerText = tot === 0 ? "SIN OBJETIVOS REGISTRADOS" : `PROGRESO: ${comp} / ${tot}`;
+            const todayStr = new Date().toLocaleDateString();
+            const todayHabits = (db.habits || []).filter(h => h.date === todayStr);
+            const comp = todayHabits.filter(h => h.done).length;
+            const tot = todayHabits.length;
+            document.getElementById('home-obj-status').innerText = tot === 0 ? "SIN OBJETIVOS REGISTRADOS" : `PROGRESO: ${comp} / ${tot}`;
 
-    // Calculo Próximo Evento
-    const dateStatus = document.getElementById('home-date-status');
-    if (!db.importantDates || db.importantDates.length === 0) {
-        dateStatus.innerText = "SIN EVENTOS PROGRAMADOS";
-    } else {
-        const sorted = [...db.importantDates].sort((a,b) => new Date(a.date) - new Date(b.date));
-        const todayReverse = todayStr.split('/').reverse().join('-');
-        const next = sorted.find(d => new Date(d.date) >= new Date(todayReverse));
-        if (next) {
-            const [y, m, d] = next.date.split('-');
-            dateStatus.innerHTML = `<span style="color:#fff">${d}/${m}/${y}</span> - ${next.title}`;
-        } else {
-            dateStatus.innerText = "NO HAY EVENTOS FUTUROS";
+            const dateStatus = document.getElementById('home-date-status');
+            if (!db.importantDates || db.importantDates.length === 0) {
+                dateStatus.innerText = "SIN EVENTOS PROGRAMADOS";
+            } else {
+                const sorted = [...db.importantDates].sort((a,b) => new Date(a.date) - new Date(b.date));
+                const todayReverse = todayStr.split('/').reverse().join('-');
+                const next = sorted.find(d => new Date(d.date) >= new Date(todayReverse));
+                if (next) {
+                    const [y, m, d] = next.date.split('-');
+                    dateStatus.innerHTML = `<span style="color:#fff">${d}/${m}/${y}</span> - ${next.title}`;
+                } else {
+                    dateStatus.innerText = "NO HAY EVENTOS FUTUROS";
+                }
+            }
         }
-    }
-}
+        // ==========================================
+      
 
-   window.showTab = function(tab, btn) {
-    // Ocultamos todas las pestañas
-    ['home', 'habits', 'word', 'agenda', 'important'].forEach(t => {
-        const el = document.getElementById('tab-' + t);
-        if(el) el.classList.add('hidden');
-    });
-    
-    // Mostramos la elegida
-    document.getElementById('tab-' + tab).classList.remove('hidden');
-    
-    // Actualizamos los botones del menú
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    if(btn) btn.classList.add('active');
-    
-    // Renderizados específicos
-    if (tab === 'home') renderHome();      // <--- Agregamos esta
-    if (tab === 'habits') renderHistory(); 
-    if (tab === 'important') renderImportant();
-}
+        window.showTab = function(tab, btn) {
+            ['home', 'habits', 'word', 'agenda', 'important'].forEach(t => {
+                const el = document.getElementById('tab-' + t);
+                if(el) el.classList.add('hidden');
+            });
+            
+            document.getElementById('tab-' + tab).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+            
+            if (tab === 'home') renderHome();      
+            if (tab === 'habits') renderHistory(); 
+            if (tab === 'important') renderImportant();
+            if (tab === 'agenda') renderAgenda();
+        }
 
         let lastCheckDate = new Date().toLocaleDateString();
         setInterval(() => {
@@ -714,11 +756,6 @@ agendaEditor.addEventListener('input', () => {
             }
         }, 1000);
 
-        startPhraseTicker();
-     
-
-
-
-    </script>
+</script>
 </body>
 </html>
